@@ -3,7 +3,7 @@
   "license": "MIT",
   "name": "noble-promise",
   "description": "A Node.js BLE (Bluetooth Low Energy) central library.",
-  "version": "1.9.0",
+  "version": "1.9.1",
   "repository": {
     "type": "git",
     "url": "https://github.com/explicitcall/noble.git"
@@ -19,6 +19,7 @@
     "central"
   ],
   "main": "./index.js",
+  "types": "./index.d.ts",
   "engines": {
     "node": ">=4.0"
   },
