@@ -187,18 +187,24 @@ describe('Peripheral', function() {
     var mockServices = null;
 
     beforeEach(function() {
-      peripheral.discoverServices = sinon.spy();
+      peripheral.discoverServices = sinon.stub();
 
       mockServices = [
         {
           uuid: '1',
-          discoverCharacteristics: sinon.spy()
+          discoverCharacteristics: sinon.stub()
         },
         {
           uuid: '2',
-          discoverCharacteristics: sinon.spy()
+          discoverCharacteristics: sinon.stub()
         }
       ];
+
+      for (const service of mockServices) {
+        service.discoverCharacteristics.resolves([]);
+      }
+
+      peripheral.discoverServices.resolves(mockServices);
     });
 
     it('should call discoverServices', function() {
@@ -208,49 +214,50 @@ describe('Peripheral', function() {
     });
 
     it('should call discoverCharacteristics on each service discovered', function() {
-      peripheral.discoverSomeServicesAndCharacteristics(mockServiceUuids, mockCharacteristicUuids);
-
-      var discoverServicesCallback = peripheral.discoverServices.getCall(0).args[1];
-
-      discoverServicesCallback(null, mockServices);
-
-      mockServices[0].discoverCharacteristics.calledWith(mockCharacteristicUuids).should.equal(true);
-      mockServices[1].discoverCharacteristics.calledWith(mockCharacteristicUuids).should.equal(true);
+      peripheral.discoverSomeServicesAndCharacteristics(mockServiceUuids, mockCharacteristicUuids)
+      .then(() => {
+        mockServices[0].discoverCharacteristics.calledWith(mockCharacteristicUuids).should.equal(true);
+        mockServices[1].discoverCharacteristics.calledWith(mockCharacteristicUuids).should.equal(true);
+      });
     });
 
     it('should callback', function(done) {
       peripheral.discoverSomeServicesAndCharacteristics(mockServiceUuids, mockCharacteristicUuids, function() {
         done();
       });
-
-      var discoverServicesCallback = peripheral.discoverServices.getCall(0).args[1];
-
-      discoverServicesCallback(null, mockServices);
-
-      mockServices[0].discoverCharacteristics.getCall(0).args[1](null, []);
-      mockServices[1].discoverCharacteristics.getCall(0).args[1](null, []);
     });
 
     it('should callback with the services and characteristics discovered', function(done) {
+      const mockCharacteristic1 = { uuid: '1' };
+      const mockCharacteristic2 = { uuid: '2' };
+      const mockCharacteristic3 = { uuid: '3' };
+
+      for (const service of mockServices) {
+        service.discoverCharacteristics = sinon.stub();
+      }
+
+      mockServices[0].discoverCharacteristics.resolves([mockCharacteristic1]);
+      mockServices[1].discoverCharacteristics.resolves([mockCharacteristic2, mockCharacteristic3]);
+
       peripheral.discoverSomeServicesAndCharacteristics(mockServiceUuids, mockCharacteristicUuids, function(err, services, characteristics) {
         services.should.equal(mockServices);
         characteristics.should.eql([mockCharacteristic1, mockCharacteristic2, mockCharacteristic3]);
         done();
       });
-
-      var discoverServicesCallback = peripheral.discoverServices.getCall(0).args[1];
-
-      discoverServicesCallback(null, mockServices);
-
-      var mockCharacteristic1 = { uuid: '1' };
-      var mockCharacteristic2 = { uuid: '2' };
-      var mockCharacteristic3 = { uuid: '3' };
-
-      mockServices[0].discoverCharacteristics.getCall(0).args[1](null, [mockCharacteristic1]);
-      mockServices[1].discoverCharacteristics.getCall(0).args[1](null, [mockCharacteristic2, mockCharacteristic3]);
     });
 
     it('should return a promise', function(done) {
+      const mockCharacteristic1 = { uuid: '1' };
+      const mockCharacteristic2 = { uuid: '2' };
+      const mockCharacteristic3 = { uuid: '3' };
+
+      for (const service of mockServices) {
+        service.discoverCharacteristics = sinon.stub();
+      }
+
+      mockServices[0].discoverCharacteristics.resolves([mockCharacteristic1]);
+      mockServices[1].discoverCharacteristics.resolves([mockCharacteristic2, mockCharacteristic3]);
+
       peripheral.discoverSomeServicesAndCharacteristics(mockServiceUuids, mockCharacteristicUuids)
       .then(function(args) {
         const services = args.services;
@@ -259,17 +266,6 @@ describe('Peripheral', function() {
         characteristics.should.eql([mockCharacteristic1, mockCharacteristic2, mockCharacteristic3]);
         done();
       });
-
-      var discoverServicesCallback = peripheral.discoverServices.getCall(0).args[1];
-
-      discoverServicesCallback(null, mockServices);
-
-      var mockCharacteristic1 = { uuid: '1' };
-      var mockCharacteristic2 = { uuid: '2' };
-      var mockCharacteristic3 = { uuid: '3' };
-
-      mockServices[0].discoverCharacteristics.getCall(0).args[1](null, [mockCharacteristic1]);
-      mockServices[1].discoverCharacteristics.getCall(0).args[1](null, [mockCharacteristic2, mockCharacteristic3]);
     });
   });
 
